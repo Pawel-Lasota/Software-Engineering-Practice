@@ -16,7 +16,6 @@ from sklearn.model_selection import train_test_split
 # example of creating a face embedding
 
 # load image from file
-RootDir = "D:\pyCharm Projects Python\database\classes_pins_dataset_train"
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 
@@ -108,8 +107,14 @@ def extract_face(filename, required_size=(200, 200)):
     return face_array
 
 # load the photo and extract the face
-#directory_detection = input("From which directory would you like to detect a face?")
-pixels = extract_face("D:\\pyCharm Projects Python\\database\\new_dataset\\Hugh Jackman0_1271.jpg")
+directory_detection = input("From which directory would you like to detect a face?")
+print("Detecting a random images' face...")
+random_filename = random.choice([
+    x for x in os.listdir(directory_detection)
+    if os.path.isfile(os.path.join(directory_detection, x))
+    ])
+
+pixels = extract_face(directory_detection + "\\" + str(random_filename))
 plt.imshow(pixels)
 plt.show()
 print(pixels.shape)
