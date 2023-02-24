@@ -51,7 +51,7 @@ def process_images():
     print("Found images of", people_count, "people/classes/labels in this directory")
 
     # Get the directory to save the images
-    save_directory = input("Enter the directory to save the images: ")
+    save_directory = input("Enter the directory to save the images (choose different than previous): ")
 
     # Size to resize the images
     img_width, img_height = 200, 200
