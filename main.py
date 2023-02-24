@@ -34,9 +34,9 @@ def normalize_image(image):
 def save_image(image, directory, filename):
     cv2.imwrite(os.path.join(directory, filename), image)
 
+directory = input("Enter the directory to process: ")
 def process_images():
     # Get the directory to process
-    directory = input("Enter the directory to process: ")
     people_count = len(os.listdir(directory))
     print("Found images of", people_count, "people/classes/labels in this directory")
 
@@ -119,17 +119,13 @@ plt.imshow(pixels)
 plt.show()
 print(pixels.shape)
 
-
-""""
-def index_and_split_data(percentage):
+def train_and_split(percentage):
     # Get data
-    people_count = len(os.listdir(RootDir))
-    print("Found images of", people_count, "people or classes/labels.")
     train_index, test_index = {}, {}
     n_train, n_test = 0, 0
     total = 0
-    for name in os.listdir(RootDir):
-        path = RootDir + "/" + name
+    for name in os.listdir(directory):
+        path = directory + "/" + name
         n = len(os.listdir(path))
         total += n
         if np.random.rand() < percentage:
@@ -141,9 +137,8 @@ def index_and_split_data(percentage):
     print("Found a total of", total, "images.")
     return n_train, train_index, n_test, test_index
 
-
-# Run the previous function
-n_train, train_list, n_test, test_list = index_and_split_data(0.8)
-print("Split the people into", n_train, "for training and", n_test, "for testing.")"""
+    # Run the previous function
+n_train, train_list, n_test, test_list = train_and_split(0.8)
+print("Split the people into", n_train, "for training and", n_test, "for testing.")
 
 
