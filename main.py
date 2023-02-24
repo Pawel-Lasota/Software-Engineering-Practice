@@ -34,6 +34,16 @@ def normalize_image(image):
 def save_image(image, directory, filename):
     cv2.imwrite(os.path.join(directory, filename), image)
 
+def get_random_image(root_directory):
+    # Get a random subdirectory
+    subdirectories = [os.path.join(root_directory, d) for d in os.listdir(root_directory) if os.path.isdir(os.path.join(root_directory, d))]
+    subdirectory = random.choice(subdirectories)
+
+    # Get a random image from the subdirectory
+    images = [os.path.join(subdirectory, f) for f in os.listdir(subdirectory) if os.path.isfile(os.path.join(subdirectory, f))]
+    image_path = random.choice(images)
+
+    return image_path
 def process_images():
     # Get the directory to process
     directory = input("Enter the directory to process: ")
@@ -122,12 +132,7 @@ def extract_face(filename, required_size=(200, 200)):
 # load the photo and extract the face
 directory_detection = input("From which directory would you like to detect a face?")
 print("Detecting a random images' face...")
-random_filename = random.choice([
-    x for x in os.listdir(directory_detection)
-    if os.path.isfile(os.path.join(directory_detection, x))
-    ])
-
-pixels = extract_face(directory_detection + "\\" + str(random_filename))
+pixels = extract_face(get_random_image(directory_detection))
 plt.imshow(pixels)
 plt.show()
 print(pixels.shape)
