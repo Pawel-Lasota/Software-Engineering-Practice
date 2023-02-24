@@ -60,6 +60,10 @@ def process_images():
     current_person = None
     current_folder = None
 
+    # Initialize lists to hold the training and testing data
+    training_data = []
+    testing_data = []
+
     # Iterate through the directory
     for root, _, files in os.walk(directory):
         for file in files:
@@ -96,9 +100,27 @@ def process_images():
                 # Normalize the image
                 image = normalize_image(image)
 
-                # Save the image in the current person's folder
-                print("Saving image named", filename, "to", current_folder)
-                #save_image(image, current_folder, filename)
+                # Randomly split the data into training and testing sets
+                if random.random() < 0.8:
+                    # Save the image in the current person's training folder
+                    training_data.append((image, current_folder))
+                else:
+                    # Save the image in the current person's testing folder
+                    testing_data.append((image, current_folder))
+
+    # Shuffle the training and testing data
+    random.shuffle(training_data)
+    random.shuffle(testing_data)
+
+    # Save the training data
+    for i, (image, folder) in enumerate(training_data):
+        filename = f"train_{i}.jpg"
+        save_image(image, folder, filename)
+
+    # Save the testing data
+    for i, (image, folder) in enumerate(testing_data):
+        filename = f"test_{i}.jpg"
+        save_image(image, folder, filename)
 
 
 if __name__ == "__main__":
@@ -136,35 +158,4 @@ pixels = extract_face(get_random_image(directory_detection))
 plt.imshow(pixels)
 plt.show()
 print(pixels.shape)
-
-"""def load_face(dir):
-    faces = list()
-    # enumerate files
-    for filename in os.listdir(dir):
-        path = dir + filename
-        face = extract_face(path)
-        faces.append(face)
-    return faces
-
-def load_dataset(dir):
-    # list for faces and labels
-    X, y = list(), list()
-    for subdir in os.listdir(dir):
-        path = dir + subdir + '/'
-        faces = load_face(path)
-        labels = [subdir for i in range(len(faces))]
-        print("loaded %d sample for class: %s" % (len(faces),subdir) ) # print progress
-        X.extend(faces)
-        y.extend(labels)
-    return np.asarray(X), np.asarray(y)
-
-trainX, trainy = load_dataset('D:\\pyCharm Projects Python\\database\\new_train\\')
-print(trainX.shape, trainy.shape)
-# load test dataset
-testX, testy = load_dataset('D:\\pyCharm Projects Python\\database\\new_train\\')
-print(testX.shape, testy.shape)
-
-np.savez_compressed('classes_pins_dataset_train.npz', trainX, trainy, testX, testy)"""
-
-
 
