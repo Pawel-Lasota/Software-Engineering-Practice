@@ -119,8 +119,8 @@ def process_images():
         print("Processing", person, "with", image_count, "images")
 
         # Split the images into train and test sets
-        train_count = int(image_count * 0.8)
-        test_count = image_count - train_count
+        test_size = int(image_count * 0.8)
+        test_count = image_count - test_size
 
         # Iterate through the images
         for i, file in enumerate(files):
@@ -141,7 +141,7 @@ def process_images():
             face = normalize_image(face)
 
             # Decide whether to save to the train or test directory
-            if i < train_count:
+            if i < test_size:
                 save_image(face, person_train_dir, file)
             else:
                 save_image(face, person_test_dir, file)
@@ -150,4 +150,54 @@ def process_images():
 
     print("Processing complete!")
 
-process_images()
+#process_images()
+
+def recognize_faces(known_faces_dir, test_faces_dir):
+    # load the known faces and compute their encodings
+    known_faces = []
+    known_face_encodings = []
+    for filename in os.listdir(known_faces_dir):
+        filepath = os.path.join(known_faces_dir, filename)
+        face = extract_face(filepath)
+        if face is not None:
+            known_faces.append(face)
+            face_encodings = face_recognition.face_encodings(face)
+            if len(face_encodings) > 0:
+                face_encoding = face_encodings[0]
+                known_face_encodings.append(face_encoding)
+
+    # load the test faces and compute their encodings
+    test_faces = []
+    test_face_encodings = []
+    for filename in os.listdir(test_faces_dir):
+        filepath = os.path.join(test_faces_dir, filename)
+        face = extract_face(filepath)
+        if face is not None:
+            test_faces.append(face)
+            face_encodings = face_recognition.face_encodings(face)
+            if len(face_encodings) > 0:
+                face_encoding = face_encodings[0]
+                test_face_encodings.append(face_encoding)
+
+    # compare each test face encoding to the known face encodings
+    num_correct = 0
+    for i, test_face_encoding in enumerate(test_face_encodings):
+        face_distances = face_recognition.face_distance(known_face_encodings, test_face_encoding)
+        min_distance = min(face_distances)
+        min_index = face_distances.argmin()
+        if min_distance < 0.6:
+            print(f"Test face {i+1} matches known face {min_index+1} with distance {min_distance:.2f}")
+            # Check if the matched face's filename matches the test face's filename
+            matched_face_filename = os.path.basename(os.path.normpath(os.path.join(known_faces_dir, os.listdir(known_faces_dir)[min_index])))
+            test_face_filename = os.path.basename(os.path.normpath(filepath))
+            if matched_face_filename in test_face_filename:
+                num_correct += 1
+        else:
+            print(f"No match found for test face {i+1}")
+
+    accuracy = (num_correct / len(test_faces)) * 100
+    print("Accuracy: ", accuracy,":%")
+
+known_faces_dir = input("Enter the path to the directory containing the known faces: ")
+test_faces_dir = input("Enter the path to the directory containing the test faces: ")
+recognize_faces(known_faces_dir, test_faces_dir)
