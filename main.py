@@ -81,7 +81,7 @@ def extract_face(filename, required_size=(200, 200)):
     face_array = np.asarray(image)
     return face_array
 
-
+""""
 def process_images():
     # Get the directory to process
     directory = input("Enter the directory to process: ")
@@ -150,12 +150,83 @@ def process_images():
 
     print("Processing complete!")
 
-#process_images()
+process_images()"""
 
+
+
+def process_images():
+    # Get the directory to process
+    directory = input("Enter the directory to process: ")
+    people_count = len(os.listdir(directory))
+    print("Found images of", people_count, "people/classes/labels in this directory")
+
+    # Get the directory to save the images
+    save_directory = input("Enter the directory to save the images (choose different than previous): ")
+
+    # Create the overall train and test directories
+    train_dir = os.path.join(save_directory, "train")
+    test_dir = os.path.join(save_directory, "test")
+    os.makedirs(train_dir, exist_ok=True)
+    os.makedirs(test_dir, exist_ok=True)
+
+    # Size to resize the images
+    img_width, img_height = 200, 200
+
+    # Iterate through the directory
+    for root, _, files in os.walk(directory):
+        # Ignore the root directory
+        if root == directory:
+            continue
+
+        # Get the person's name from the folder path
+        person = os.path.basename(root)
+
+        # Count the number of images for this person
+        image_count = len(files)
+        print("Processing", person, "with", image_count, "images")
+
+        # Split the images into train and test sets
+        test_size = int(image_count * 0.8)
+        test_count = image_count - test_size
+
+        # Iterate through the images
+        for i, file in enumerate(files):
+            # Get the file path
+            file_path = os.path.join(root, file)
+
+            # Extract the face from the image
+            face = extract_face(file_path, required_size=(img_width, img_height))
+
+            # If no face is detected, skip the image
+            if face is None:
+                print("No face detected in", file_path)
+                continue
+
+            # Preprocess the image
+            face = resize_image(face, size=(img_width, img_height))
+            face = convert_to_grayscale(face)
+            face = normalize_image(face)
+
+            # Decide whether to save to the train or test directory
+            if i < test_size:
+                save_directory = train_dir
+            else:
+                save_directory = test_dir
+
+            # Save the image in the train or test directory
+            save_image(face, save_directory, person + "_" + file)
+
+        print("Finished processing", person)
+
+    print("Processing complete!")
+
+
+process_images()
 def recognize_faces(known_faces_dir, test_faces_dir):
     # load the known faces and compute their encodings
     known_faces = []
     known_face_encodings = []
+    known_face_names = []
     for filename in os.listdir(known_faces_dir):
         filepath = os.path.join(known_faces_dir, filename)
         face = extract_face(filepath)
@@ -165,6 +236,7 @@ def recognize_faces(known_faces_dir, test_faces_dir):
             if len(face_encodings) > 0:
                 face_encoding = face_encodings[0]
                 known_face_encodings.append(face_encoding)
+                known_face_names.append(os.path.splitext(filename)[0])
 
     # load the test faces and compute their encodings
     test_faces = []
@@ -180,24 +252,27 @@ def recognize_faces(known_faces_dir, test_faces_dir):
                 test_face_encodings.append(face_encoding)
 
     # compare each test face encoding to the known face encodings
-    num_correct = 0
+    results = []
     for i, test_face_encoding in enumerate(test_face_encodings):
         face_distances = face_recognition.face_distance(known_face_encodings, test_face_encoding)
         min_distance = min(face_distances)
         min_index = face_distances.argmin()
         if min_distance < 0.6:
-            print(f"Test face {i+1} matches known face {min_index+1} with distance {min_distance:.2f}")
-            # Check if the matched face's filename matches the test face's filename
-            matched_face_filename = os.path.basename(os.path.normpath(os.path.join(known_faces_dir, os.listdir(known_faces_dir)[min_index])))
-            test_face_filename = os.path.basename(os.path.normpath(filepath))
-            if matched_face_filename in test_face_filename:
-                num_correct += 1
+            matched_face_name = known_face_names[min_index]
+            results.append((matched_face_name, min_distance))
         else:
-            print(f"No match found for test face {i+1}")
+            results.append(("unknown", min_distance))
 
-    accuracy = (num_correct / len(test_faces)) * 100
-    print("Accuracy: ", accuracy,":%")
+    return results
 
 known_faces_dir = input("Enter the path to the directory containing the known faces: ")
 test_faces_dir = input("Enter the path to the directory containing the test faces: ")
-recognize_faces(known_faces_dir, test_faces_dir)
+results = recognize_faces(known_faces_dir, test_faces_dir)
+for i, result in enumerate(results):
+    name, distance = result
+    if name == "unknown":
+        print(f"No match found for test face {i+1}")
+    else:
+        print(f"Test face {i+1} matches {name} with distance {distance:.2f}")
+accuracy = (sum(1 for name, distance in results if name != "unknown") / len(results)) * 100
+print(f"Accuracy: {accuracy:.2f}%")
